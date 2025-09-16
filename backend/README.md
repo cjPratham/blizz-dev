@@ -15,14 +15,23 @@ It provides APIs for authentication, class management, attendance sessions, and 
 backend/
 **src**
 **config/** Database and environment configs
+
 **controllers/** Business logic (user, class, attendance)
+
 **models/** Mongoose schemas
+
 **routes/** API routes
+
 **middlewares/** Auth / validation middlewares
+
 **server.js** Entry point
+
 **env** Environment variables (ignored in git)
+
 **gitignore** to ignore the heavy files
+
 **package.json**
+
 **README.md**
 
 ## Setup Instructions
