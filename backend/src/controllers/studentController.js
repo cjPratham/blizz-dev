@@ -118,7 +118,7 @@ exports.markAttendance = async (req, res) => {
             const withinRadius = isWithinRadius(
                 { lat: studentLat, lng: studentLng },     // Student location
                 { lat: session.geoLocation.lat, lng: session.geoLocation.lng }, // Teacher location
-                100 // 100 meters threshold
+                10 // 10 meters threshold
             );
 
             if (!withinRadius) {
@@ -209,5 +209,46 @@ exports.getProfile = async (req, res) => {
         res.json({ student });
     } catch (err) {
         res.status(500).json({ msg: "Error fetching profile", error: err.message });
+    }
+};
+
+
+// @desc    Get student attendance percentage for a class
+// @route   GET /api/student/attendance-percentage/:classId
+// @access  Private (Student)
+exports.getAttendancePercentage = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const studentId = req.user.id;
+
+        // Get total sessions for the class
+        const totalSessions = await Session.countDocuments({ classId });
+        
+        // Get attended sessions count for the student
+        const attendedSessions = await Attendance.countDocuments({
+            classId,
+            studentId,
+            status: "present"
+        });
+
+        // Calculate percentage
+        const percentage = totalSessions === 0 ? 0 : (attendedSessions / totalSessions) * 100;
+
+        // Check if above 75%
+        const isAboveThreshold = percentage >= 75;
+
+        res.json({
+            classId,
+            totalSessions,
+            attendedSessions,
+            percentage: percentage.toFixed(2),
+            status: isAboveThreshold ? "Satisfactory" : "Needs improvement",
+            message: isAboveThreshold 
+                ? "Your attendance is good! Keep it up!" 
+                : "Your attendance is below 75%. Please attend more classes."
+        });
+
+    } catch (err) {
+        res.status(500).json({ msg: "Error calculating attendance percentage", error: err.message });
     }
 };

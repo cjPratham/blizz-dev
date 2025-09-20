@@ -28,4 +28,7 @@ router.post("/attendance/mark", protect, authorize("student"), studentController
 // Get attendance history
 router.get("/attendance/history", protect, authorize("student"), studentController.getAttendanceHistory);
 
+//Get attendance percentage
+router.get("/attendance-percentage/:classId", protect, authorize("student"), studentController.getAttendancePercentage);
+
 module.exports = router;
