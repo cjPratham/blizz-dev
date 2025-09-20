@@ -1,30 +1,31 @@
 const express = require("express");
-const {
-  joinClass,
-  getMyClasses,
-  markAttendance,
-  getAttendanceHistory,
-  getProfile,
-  
-} = require("../controllers/studentController");
 const { protect, authorize } = require("../middleware/authMiddleware");
+const studentController = require("../controllers/studentController");
 
 const router = express.Router();
 
-// All routes are protected and only for students
-router.use(protect);
-router.use(authorize("student"));
+// ====================== PROFILE ROUTES ====================== //
 
-// Student profile routes
-router.get("/profile", getProfile);
-router.put("/profile", updateProfile);
+// Get student profile
+router.get("/profile", protect, authorize("student"), studentController.getProfile);
 
-// Class-related routes
-router.post("/join-class", joinClass);
-router.get("/my-classes", getMyClasses);
+// ====================== CLASS ROUTES ====================== //
 
-// Attendance routes
-router.post("/mark-attendance", markAttendance);
-router.get("/attendance-history", getAttendanceHistory);
+// Join a class with code
+router.post("/classes/join", protect, authorize("student"), studentController.joinClass);
+
+// Get all classes for the student
+router.get("/classes", protect, authorize("student"), studentController.getStudentClasses);
+
+// Get active sessions for a class
+router.get("/classes/:classId/active-sessions", protect, authorize("student"), studentController.getActiveSessions);
+
+// ====================== ATTENDANCE ROUTES ====================== //
+
+// Mark attendance for a session
+router.post("/attendance/mark", protect, authorize("student"), studentController.markAttendance);
+
+// Get attendance history
+router.get("/attendance/history", protect, authorize("student"), studentController.getAttendanceHistory);
 
 module.exports = router;
