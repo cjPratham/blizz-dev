@@ -56,12 +56,10 @@ exports.getActiveSessions = async (req, res) => {
             return res.status(403).json({ msg: "Not enrolled in this class" });
         }
 
-        const currentTime = new Date();
+        // const currentTime = new Date();
         const sessions = await Session.find({
             classId,
-            active: true,
-            startTime: { $lte: currentTime },
-            endTime: { $gte: currentTime }
+            active: true
         });
 
         res.json(sessions);
@@ -75,7 +73,7 @@ exports.getActiveSessions = async (req, res) => {
 // @access  Private (Student)
 exports.markAttendance = async (req, res) => {
     try {
-        const { sessionId, studentLat, studentLng } = req.body;
+        const { sessionId, studentLat, studentLng, status } = req.body;
         const studentId = req.user.id;
 
         if (!sessionId || studentLat === undefined || studentLng === undefined) {
@@ -105,7 +103,7 @@ exports.markAttendance = async (req, res) => {
         // 3. Check if session is within time window
         const currentTime = new Date();
         if (currentTime < session.startTime || currentTime > session.endTime) {
-            return res.status(400).json({ msg: "Attendance can only be marked during session hours" });
+            return res.status(400).json({ msg: `Attendance can only be marked during session hours current time:${currentTime}session starts at ${session.startTime}` });
         }
 
         // 4. Geolocation validation (if session method is 'geo')
@@ -118,12 +116,12 @@ exports.markAttendance = async (req, res) => {
             const withinRadius = isWithinRadius(
                 { lat: studentLat, lng: studentLng },     // Student location
                 { lat: session.geoLocation.lat, lng: session.geoLocation.lng }, // Teacher location
-                10 // 10 meters threshold
+                50 // 10 meters threshold
             );
 
             if (!withinRadius) {
                 return res.status(400).json({
-                    msg: "You are too far from the class location",
+                    msg: `You are too far from the class location${withinRadius}`,
                     required: "Come within 100m of the classroom"
                 });
             }
@@ -144,7 +142,7 @@ exports.markAttendance = async (req, res) => {
             sessionId,
             classId: session.classId,
             studentId,
-            status: "present",
+            status: status,
             geoLocation: {
                 lat: studentLat,
                 lng: studentLng
