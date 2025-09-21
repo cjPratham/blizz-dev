@@ -12,10 +12,16 @@ router.post("/classes", protect, authorize("teacher"), teacherController.createC
 // Get all classes for the teacher
 router.get("/classes", protect, authorize("teacher"), teacherController.getTeacherClasses);
 
+// Get class details by ID
+router.get("/classes/:id", protect, authorize("teacher"), teacherController.getClassDetails);
+
 // ====================== SESSION ROUTES ====================== //
 
 // Create a session with geo-location
 router.post("/sessions", protect, authorize("teacher"), teacherController.createSession);
+
+// get all the sessions for a class
+router.get("/sessions/:classId", protect, authorize("teacher"), teacherController.getSessionByClassId);
 
 // Start a session
 router.patch("/sessions/:id/start", protect, authorize("teacher"), teacherController.startSession);

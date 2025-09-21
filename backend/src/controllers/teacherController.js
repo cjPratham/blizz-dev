@@ -33,22 +33,35 @@ exports.getTeacherClasses = async (req, res) => {
   }
 };
 
-// Teacher creates a session with optional geo-location
-
-exports.createSession = async (req, res) => {
+// Get class details by ID
+exports.getClassDetails = async (req, res) => {
   try {
-    const { classId, startTime, endTime, method, geoLocation } = req.body;
+    const { id } = req.params; // route: /teacher/classes/:id
+    const cls = await Class.findOne({
+      _id: id,
+      teacher: req.user.id, // ensure only the owner teacher can fetch it
+    }).populate("students", "username email");
 
-    // Validate required fields
-    if (!classId || !startTime || !endTime || !method) {
-      return res.status(400).json({ msg: "classId, startTime, endTime, and method are required" });
+    if (!cls) {
+      return res.status(404).json({ msg: `Class not found ${id}` });
     }
 
-    // If method is 'geo', geoLocation is required
-    if (method === "geo") {
-      if (!geoLocation || typeof geoLocation.lat !== "number" || typeof geoLocation.lng !== "number") {
-        return res.status(400).json({ msg: "Geo-location is required for geo-based sessions" });
-      }
+    res.json(cls);
+  } catch (err) {
+    console.log("Error in getClassDetails:", err);
+    res.status(500).json({ msg: "Error fetching class details", error: err.message });
+  }
+};
+
+// Create a session (no geo-location needed here)
+exports.createSession = async (req, res) => {
+  try {
+    const { classId, startTime, endTime} = req.body;
+
+    if (!classId || !startTime || !endTime) {
+      return res.status(400).json({
+        msg: "classId, startTime, endTime, and method are required"
+      });
     }
 
     const session = new Session({
@@ -56,9 +69,9 @@ exports.createSession = async (req, res) => {
       teacherId: req.user.id,
       startTime,
       endTime,
-      method,
-      active: true,
-      geoLocation: method === "geo" ? geoLocation : undefined
+      method:"geo", // default method
+      geoLocation: { lat: 0, lng: 0 }, // default placeholder
+      active: false,
     });
 
     await session.save();
@@ -68,11 +81,19 @@ exports.createSession = async (req, res) => {
   }
 };
 
-// Start session
+// Start session (geo-location required if method is 'geo')
 exports.startSession = async (req, res) => {
   try {
     const session = await Session.findById(req.params.id);
     if (!session) return res.status(404).json({ msg: "Session not found" });
+
+    if (session.method === "geo") {
+      const { lat, lng } = req.body;
+      if (typeof lat !== "number" || typeof lng !== "number") {
+        return res.status(400).json({ msg: "Latitude and longitude are required to start geo session" });
+      }
+      session.geoLocation = { lat, lng };
+    }
 
     session.active = true;
     await session.save();
@@ -97,6 +118,28 @@ exports.stopSession = async (req, res) => {
     res.status(500).json({ msg: "Error stopping session", error: err.message });
   }
 };
+
+// Get sessions by class ID
+exports.getSessionByClassId = async (req, res) => {
+  try {
+    const { classId } = req.params; // assuming classId is passed as a URL param
+
+    if (!classId) {
+      return res.status(400).json({ msg: "classId is required" });
+    }
+
+    // Find all sessions for this class created by the logged-in teacher
+    const sessions = await Session.find({
+      classId,
+      teacherId: req.user.id,
+    }).sort({ startTime: -1 }); // optional: latest sessions first
+
+    res.status(200).json({ msg: "Sessions fetched", sessions });
+  } catch (err) {
+    res.status(500).json({ msg: "Error fetching sessions", error: err.message });
+  }
+};
+
 
 // Get attendance count for a session
 exports.getSessionAttendanceCount = async (req, res) => {

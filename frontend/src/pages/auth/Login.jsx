@@ -84,15 +84,15 @@ const Login = () => {
           {loading ? "Logging in..." : "Login"}
         </button>
         <div className="text-center text-sm text-gray-500">
-  Don't have an account?{" "}
-  <button
-    type="button"
-    onClick={() => navigate("/signup")}
-    className="text-blue-500 hover:underline font-medium"
-  >
-    Sign up
-  </button>
-</div>
+          Don't have an account?{" "}
+          <button
+            type="button"
+            onClick={() => navigate("/signup")}
+            className="text-blue-500 hover:underline font-medium"
+          >
+            Sign up
+          </button>
+        </div>
       </form>
     </div>
   );

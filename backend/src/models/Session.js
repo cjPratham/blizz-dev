@@ -10,10 +10,10 @@ const sessionSchema = new mongoose.Schema({
   method: { 
     type: String, 
     enum: ["manual", "geo", "bluetooth"], 
-    default: "manual" 
+    default: "geo" 
   },
 
-  active: { type: Boolean, default: true }, // session status (open/closed)
+  active: { type: Boolean, default: false }, // session status (open/closed)
 
   // Geo-location of the teacher (latitude and longitude)
   geoLocation: {
