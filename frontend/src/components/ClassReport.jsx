@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import api from "../api/axios";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 const ClassReport = () => {
   const { classId } = useParams();
@@ -47,35 +47,36 @@ const ClassReport = () => {
 
   // Export to PDF
   const exportPDF = () => {
-    const doc = new jsPDF();
+  const doc = new jsPDF();
 
-    doc.setFontSize(16);
-    doc.text(`${data.className} - Attendance Report`, 14, 20);
-    doc.setFontSize(12);
-    doc.text(`Subject: ${data.subject}`, 14, 28);
-    doc.text(`Teacher: ${data.teacherName}`, 14, 36);
-    doc.text(`Total Sessions: ${data.totalSessions}`, 14, 44);
+  doc.setFontSize(16);
+  doc.text(`${data.className} - Attendance Report`, 14, 20);
+  doc.setFontSize(12);
+  doc.text(`Subject: ${data.subject}`, 14, 28);
+  doc.text(`Teacher: ${data.teacherName}`, 14, 36);
+  doc.text(`Total Sessions: ${data.totalSessions}`, 14, 44);
 
-    const tableColumn = ["Student Name", "Present", "Absent", "Total Sessions", "% Attendance"];
-    const tableRows = data.report.map((s) => [
-      s.studentName,
-      s.presentCount,
-      s.absentCount,
-      s.totalSessions,
-      s.attendancePercentage,
-    ]);
+  const tableColumn = ["Student Name", "Present", "Absent", "Total Sessions", "% Attendance"];
+  const tableRows = data.report.map((s) => [
+    s.studentName,
+    s.presentCount,
+    s.absentCount,
+    s.totalSessions,
+    s.attendancePercentage,
+  ]);
 
-    doc.autoTable({
-      startY: 50,
-      head: [tableColumn],
-      body: tableRows,
-      theme: "grid",
-      headStyles: { fillColor: [88, 28, 135] }, // Blizz purple
-      alternateRowStyles: { fillColor: [245, 245, 245] },
-    });
+  autoTable(doc, {
+    startY: 50,
+    head: [tableColumn],
+    body: tableRows,
+    theme: "grid",
+    headStyles: { fillColor: [88, 28, 135] },
+    alternateRowStyles: { fillColor: [245, 245, 245] },
+  });
 
-    doc.save(`${data.className}_Attendance_Report.pdf`);
-  };
+  doc.save(`${data.className}_Attendance_Report.pdf`);
+};
+
 
   return (
     <div className="p-4 md:p-6">
@@ -131,6 +132,7 @@ const ClassReport = () => {
     </table>
   </div>
 </div>
+
   );
 };
 
