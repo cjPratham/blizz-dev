@@ -12,32 +12,47 @@ const ClassDetails = () => {
   }, [id]);
 
   const fetchClass = async () => {
-    const res = await api.get(`/teacher/classes/${id}`);
-    setCls(res.data);
+    try {
+      const res = await api.get(`/teacher/classes/${id}`);
+      setCls(res.data);
+    } catch (err) {
+      console.error("Error fetching class details:", err);
+    }
   };
 
-  if (!cls) return <p>Loading...</p>;
+  if (!cls) return <p className="text-gray-500">Loading class details...</p>;
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">{cls.name} ({cls.subject})</h2>
+    <div className="p-4 md:p-6 bg-purple-50 min-h-screen">
+      {/* Class Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <h2 className="text-2xl md:text-3xl font-bold text-purple-800">
+          {cls.name} <span className="text-gray-600 text-lg">({cls.subject})</span>
+        </h2>
         <Link
           to={`/teacher/class/${id}/sessions`}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-purple-700 hover:bg-purple-800 text-white font-semibold px-4 py-2 rounded shadow-md transition"
         >
           Manage Sessions
         </Link>
       </div>
 
-      <p className="mb-4">Code: <span className="font-mono">{cls.code}</span></p>
+      {/* Class Code */}
+      <p className="mb-6 text-gray-700">
+        Class Code: <span className="font-mono text-purple-900">{cls.code}</span>
+      </p>
 
-      <h3 className="mt-4 font-semibold mb-2">Students</h3>
-      <div className="space-y-3">
-        {cls.students.map((s) => (
-          <StudentCard key={s._id} student={s} classId={id} />
-        ))}
-      </div>
+      {/* Students List */}
+      <h3 className="text-xl font-semibold text-purple-800 mb-4">Students</h3>
+      {cls.students.length === 0 ? (
+        <p className="text-gray-500">No students enrolled in this class yet.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {cls.students.map((s) => (
+            <StudentCard key={s._id} student={s} classId={id} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

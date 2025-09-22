@@ -23,20 +23,23 @@ const Sessions = () => {
   };
 
   const fetchSessions = async () => {
-  try {
-    const res = await api.get(`/teacher/sessions/${id}`);
-    setSessions(res.data.sessions || []); // <- use the sessions array
-  } catch (err) {
-    console.error("Error fetching sessions:", err);
-  }
-};
-
+    try {
+      const res = await api.get(`/teacher/sessions/${id}`);
+      setSessions(res.data.sessions || []);
+    } catch (err) {
+      console.error("Error fetching sessions:", err);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await api.post("/teacher/sessions", { ...form, classId: id });
-    setForm({ startTime: "", endTime: "", method: "geo" });
-    fetchSessions();
+    try {
+      await api.post("/teacher/sessions", { ...form, classId: id });
+      setForm({ startTime: "", endTime: "", method: "geo" });
+      fetchSessions();
+    } catch (err) {
+      console.error("Error creating session:", err);
+    }
   };
 
   const startSession = async (sessionId) => {
@@ -72,69 +75,91 @@ const Sessions = () => {
   };
 
   return (
-    <div>
-      <h2 className="text-xl font-bold mb-4">
+    <div className="p-4 md:p-6 bg-purple-50 min-h-screen">
+      <h2 className="text-2xl md:text-3xl font-bold mb-6 text-purple-800">
         Sessions for {cls ? `${cls.name} (${cls.subject})` : "Loading..."}
       </h2>
 
-      {/* Create Session */}
-      <form onSubmit={handleSubmit} className="mb-6 space-x-2">
+      {/* Create Session Form */}
+      <form className="mb-6 flex flex-col md:flex-row gap-2" onSubmit={handleSubmit}>
         <input
           type="datetime-local"
           value={form.startTime}
           onChange={(e) => setForm({ ...form, startTime: e.target.value })}
-          className="border p-2"
+          className="border rounded px-3 py-2 flex-1"
+          required
         />
         <input
           type="datetime-local"
           value={form.endTime}
           onChange={(e) => setForm({ ...form, endTime: e.target.value })}
-          className="border p-2"
+          className="border rounded px-3 py-2 flex-1"
+          required
         />
-        <button className="bg-green-600 text-white px-4 py-2 rounded">
-          Create
+        <button
+          type="submit"
+          className="bg-purple-700 hover:bg-purple-800 text-white font-semibold px-4 py-2 rounded shadow-md transition"
+        >
+          Create Session
         </button>
       </form>
 
-      {/* List sessions */}
+      {/* Sessions List */}
       <ul className="space-y-4">
         {sessions.map((s) => (
-          <li key={s._id} className="border p-4 bg-white rounded shadow">
-            <p className="font-semibold">
-              Start: {new Date(s.startTime).toLocaleString()}
-            </p>
-            <p>End: {new Date(s.endTime).toLocaleString()}</p>
-            <p>Status: {s.active ? "🟢 Active" : "🔴 Stopped"}</p>
+          <li
+            key={s._id}
+            className="border rounded-lg p-4 bg-white shadow-md flex flex-col md:flex-row md:justify-between md:items-center gap-3"
+          >
+            <div className="flex-1">
+              <p className="font-semibold">
+                Start: {new Date(s.startTime).toLocaleString()}
+              </p>
+              <p>End: {new Date(s.endTime).toLocaleString()}</p>
+              <p>
+                Status:{" "}
+                <span
+                  className={`font-semibold ${
+                    s.active ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  {s.active ? "🟢 Active" : "🔴 Stopped"}
+                </span>
+              </p>
+            </div>
 
-            {/* Buttons */}
-            {s.active ? (
-              <button
-                onClick={() => stopSession(s._id)}
-                className="mt-2 bg-red-600 text-white px-3 py-1 rounded"
-              >
-                Stop
-              </button>
-            ) : (
-              <button
-                onClick={() => startSession(s._id)}
-                className="mt-2 bg-blue-600 text-white px-3 py-1 rounded"
-              >
-                Start
-              </button>
-            )}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              {s.active ? (
+                <button
+                  onClick={() => stopSession(s._id)}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow-md transition"
+                >
+                  Stop
+                </button>
+              ) : (
+                <button
+                  onClick={() => startSession(s._id)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow-md transition"
+                >
+                  Start
+                </button>
+              )}
 
-            {/* Attendance Count */}
-            {s.active && (
-              <AttendanceCounter sessionId={s._id} getCount={getAttendanceCount} />
-            )}
+              {s.active && (
+                <AttendanceCounter sessionId={s._id} getCount={getAttendanceCount} />
+              )}
+            </div>
           </li>
         ))}
       </ul>
+
+      {sessions.length === 0 && (
+        <p className="mt-4 text-gray-500">No sessions created yet.</p>
+      )}
     </div>
   );
 };
 
-// Attendance counter subcomponent
 const AttendanceCounter = ({ sessionId, getCount }) => {
   const [count, setCount] = useState(0);
 
@@ -144,12 +169,11 @@ const AttendanceCounter = ({ sessionId, getCount }) => {
       setCount(c);
     };
     fetchCount();
-
-    const interval = setInterval(fetchCount, 5000); // refresh every 5s
+    const interval = setInterval(fetchCount, 5000);
     return () => clearInterval(interval);
-  }, [sessionId]);
+  }, [sessionId, getCount]);
 
-  return <p className="mt-2">✅ Attendance marked: {count}</p>;
+  return <p className="mt-2 font-semibold text-purple-700">✅ Attendance marked: {count}</p>;
 };
 
 export default Sessions;

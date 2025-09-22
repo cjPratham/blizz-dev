@@ -2,18 +2,45 @@ const Class = require("../models/Class");
 const Session = require("../models/Session");
 const Attendance = require("../models/Attendance");
 const Student = require("../models/User"); 
+const User = require("../models/User"); // Teacher Profile
+const mongoose = require("mongoose");
 
-// Teacher creates a class
+// ===================== Teacher Profile =====================
+exports.getTeacherProfile = async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ msg: "Unauthorized: No user info" });
+    }
+
+    const teacher = await User.findById(req.user.id).select("-password");
+    if (!teacher) return res.status(404).json({ msg: "Teacher not found" });
+    if (teacher.role !== "teacher") return res.status(403).json({ msg: "Access denied: Not a teacher" });
+
+    res.json({
+      teacherId: teacher._id,
+      username: teacher.username,
+      email: teacher.email,
+      role: teacher.role,
+      createdAt: teacher.createdAt,
+      updatedAt: teacher.updatedAt,
+    });
+  } catch (err) {
+    console.error("Error in getTeacherProfile:", err);
+    res.status(500).json({ msg: "Server error", error: err.message });
+  }
+};
+
+// ===================== Class Management =====================
 exports.createClass = async (req, res) => {
   try {
     const { name, subject } = req.body;
-    const code = Math.random().toString(36).substr(2, 6).toUpperCase(); // e.g. "A1B2C3"
+    const code = Math.random().toString(36).substr(2, 6).toUpperCase();
 
     const newClass = new Class({
       name,
       subject,
       code,
-      teacher: req.user.id
+      teacher: req.user.id,
     });
 
     await newClass.save();
@@ -23,7 +50,6 @@ exports.createClass = async (req, res) => {
   }
 };
 
-// Get classes for teacher
 exports.getTeacherClasses = async (req, res) => {
   try {
     const classes = await Class.find({ teacher: req.user.id }).populate("students", "username email");
@@ -33,19 +59,13 @@ exports.getTeacherClasses = async (req, res) => {
   }
 };
 
-// Get class details by ID
 exports.getClassDetails = async (req, res) => {
   try {
-    const { id } = req.params; // route: /teacher/classes/:id
-    const cls = await Class.findOne({
-      _id: id,
-      teacher: req.user.id, // ensure only the owner teacher can fetch it
-    }).populate("students", "username email");
+    const { id } = req.params;
+    const cls = await Class.findOne({ _id: id, teacher: req.user.id })
+      .populate("students", "username email");
 
-    if (!cls) {
-      return res.status(404).json({ msg: `Class not found ${id}` });
-    }
-
+    if (!cls) return res.status(404).json({ msg: `Class not found ${id}` });
     res.json(cls);
   } catch (err) {
     console.log("Error in getClassDetails:", err);
@@ -53,15 +73,13 @@ exports.getClassDetails = async (req, res) => {
   }
 };
 
-// Create a session (no geo-location needed here)
+// ===================== Session Management =====================
 exports.createSession = async (req, res) => {
   try {
-    const { classId, startTime, endTime} = req.body;
+    const { classId, startTime, endTime } = req.body;
 
     if (!classId || !startTime || !endTime) {
-      return res.status(400).json({
-        msg: "classId, startTime, endTime, and method are required"
-      });
+      return res.status(400).json({ msg: "classId, startTime, endTime are required" });
     }
 
     const session = new Session({
@@ -69,8 +87,8 @@ exports.createSession = async (req, res) => {
       teacherId: req.user.id,
       startTime,
       endTime,
-      method:"geo", // default method
-      geoLocation: { lat: 0, lng: 0 }, // default placeholder
+      method: "geo",
+      geoLocation: { lat: 0, lng: 0 },
       active: false,
     });
 
@@ -81,7 +99,6 @@ exports.createSession = async (req, res) => {
   }
 };
 
-// Start session (geo-location required if method is 'geo')
 exports.startSession = async (req, res) => {
   try {
     const session = await Session.findById(req.params.id);
@@ -90,21 +107,19 @@ exports.startSession = async (req, res) => {
     if (session.method === "geo") {
       const { lat, lng } = req.body;
       if (typeof lat !== "number" || typeof lng !== "number") {
-        return res.status(400).json({ msg: "Latitude and longitude are required to start geo session" });
+        return res.status(400).json({ msg: "Latitude and longitude required for geo session" });
       }
       session.geoLocation = { lat, lng };
     }
 
     session.active = true;
     await session.save();
-
     res.json({ msg: "Session started", session });
   } catch (err) {
     res.status(500).json({ msg: "Error starting session", error: err.message });
   }
 };
 
-// Stop session
 exports.stopSession = async (req, res) => {
   try {
     const session = await Session.findById(req.params.id);
@@ -112,36 +127,24 @@ exports.stopSession = async (req, res) => {
 
     session.active = false;
     await session.save();
-
     res.json({ msg: "Session stopped", session });
   } catch (err) {
     res.status(500).json({ msg: "Error stopping session", error: err.message });
   }
 };
 
-// Get sessions by class ID
 exports.getSessionByClassId = async (req, res) => {
   try {
-    const { classId } = req.params; // assuming classId is passed as a URL param
+    const { classId } = req.params;
+    if (!classId) return res.status(400).json({ msg: "classId is required" });
 
-    if (!classId) {
-      return res.status(400).json({ msg: "classId is required" });
-    }
-
-    // Find all sessions for this class created by the logged-in teacher
-    const sessions = await Session.find({
-      classId,
-      teacherId: req.user.id,
-    }).sort({ startTime: -1 }); // optional: latest sessions first
-
+    const sessions = await Session.find({ classId, teacherId: req.user.id }).sort({ startTime: -1 });
     res.status(200).json({ msg: "Sessions fetched", sessions });
   } catch (err) {
     res.status(500).json({ msg: "Error fetching sessions", error: err.message });
   }
 };
 
-
-// Get attendance count for a session
 exports.getSessionAttendanceCount = async (req, res) => {
   try {
     const { sessionId } = req.params;
@@ -152,15 +155,15 @@ exports.getSessionAttendanceCount = async (req, res) => {
   }
 };
 
-// Manually mark attendance
+// ===================== Attendance Management =====================
 exports.markManualAttendance = async (req, res) => {
   try {
     const { sessionId, studentId, status } = req.body;
 
-    let record = await Attendance.findOneAndUpdate(
+    const record = await Attendance.findOneAndUpdate(
       { sessionId, studentId },
       { status },
-      { new: true, upsert: true } // create if not exists
+      { new: true, upsert: true }
     );
 
     res.json({ msg: "Manual attendance updated", record });
@@ -169,34 +172,23 @@ exports.markManualAttendance = async (req, res) => {
   }
 };
 
-// Get detailed attendance for a session
-
 exports.getSessionAttendance = async (req, res) => {
   try {
     const { sessionId } = req.params;
 
-    // 1. Find the session to get classId
     const session = await Attendance.findOne({ sessionId });
     if (!session) return res.status(404).json({ msg: "Session not found" });
 
     const classId = session.classId;
-
-    // 2. Get all students in the class
     const students = await Student.find({ classId }).select("name _id");
-
-    // 3. Get attendance records for the session
     const records = await Attendance.find({ sessionId }).select("studentId status -_id");
 
-    // 4. Map attendance records for quick lookup
     const recordMap = {};
-    records.forEach(r => {
-      recordMap[r.studentId.toString()] = r.status;
-    });
+    records.forEach(r => (recordMap[r.studentId.toString()] = r.status));
 
-    // 5. Build final attendance list
     const attendanceList = students.map(student => ({
       studentName: student.name,
-      status: recordMap[student._id.toString()] || "absent"
+      status: recordMap[student._id.toString()] || "absent",
     }));
 
     res.json({ sessionId, attendance: attendanceList });
@@ -205,37 +197,31 @@ exports.getSessionAttendance = async (req, res) => {
   }
 };
 
-
-
-
 exports.getClassAttendanceReport = async (req, res) => {
   try {
     const { classId } = req.params;
 
-    // 1. Get the class and its students
-    const cls = await Class.findById(classId).populate("students", "name email");
+    const cls = await Class.findById(classId).populate("students", "username email");
     if (!cls) return res.status(404).json({ msg: "Class not found" });
 
     const students = cls.students;
-
-    // 2. Get all sessions for this class
     const sessions = await Session.find({ classId });
     const totalSessions = sessions.length;
 
-    // 3. Calculate attendance for each student
     const reportPromises = students.map(async (student) => {
       const attendedCount = await Attendance.countDocuments({
         classId,
         studentId: student._id,
-        status: "present"
+        status: "present",
       });
 
       const percentage = totalSessions === 0 ? 0 : (attendedCount / totalSessions) * 100;
 
       return {
-        studentName: student.name,
+        studentId: student._id,
+        studentName: student.username,
         email: student.email,
-        attendancePercentage: percentage.toFixed(2)
+        attendancePercentage: percentage.toFixed(2),
       };
     });
 
@@ -245,52 +231,139 @@ exports.getClassAttendanceReport = async (req, res) => {
       classId,
       className: cls.name,
       totalSessions,
-      report
+      report,
     });
-
   } catch (err) {
     res.status(500).json({ msg: "Error fetching attendance report", error: err.message });
   }
 };
 
+exports.getStudentAttendanceDetails = async (req, res) => {
+  try {
+    const { classId, studentId } = req.params;
 
-// // Student joins a class with code
-// exports.joinClass = async (req, res) => {
-//   try {
-//     const { code } = req.body;
-//     const cls = await Class.findOne({ code });
-//     if (!cls) return res.status(404).json({ msg: "Class not found" });
+    const cls = await Class.findById(classId).populate("students", "username email");
+    if (!cls) return res.status(404).json({ msg: "Class not found" });
 
-//     if (cls.students.includes(req.user.id)) {
-//       return res.status(400).json({ msg: "Already enrolled" });
-//     }
+    const student = cls.students.find(s => s._id.toString() === studentId);
+    if (!student) return res.status(404).json({ msg: "Student not found in this class" });
 
-//     cls.students.push(req.user.id);
-//     await cls.save();
+    const sessions = await Session.find({ classId }).sort({ startTime: 1 });
+    const attendanceRecords = await Attendance.find({ classId, studentId });
 
-//     res.json({ msg: "Joined class successfully" });
-//   } catch (err) {
-//     res.status(500).json({ msg: "Error joining class", error: err.message });
-//   }
-// };
+    const attendanceMap = {};
+    attendanceRecords.forEach(rec => (attendanceMap[rec.sessionId.toString()] = rec.status));
 
-// // Get active sessions for student
-// exports.getActiveSessions = async (req, res) => {
-//   try {
-//     const { classId } = req.params;
-//     const sessions = await AttendanceSession.find({ classId, active: true });
-//     res.json(sessions);
-//   } catch (err) {
-//     res.status(500).json({ msg: "Error fetching sessions", error: err.message });
-//   }
-// };
+    const report = sessions.map(session => ({
+      sessionId: session._id,
+      date: session.startTime.toISOString().split("T")[0],
+      startTime: session.startTime,
+      endTime: session.endTime,
+      status: attendanceMap[session._id.toString()] || "absent",
+    }));
 
-// // Get classes for student
-// exports.getStudentClasses = async (req, res) => {
-//   try {
-//     const classes = await Class.find({ students: req.user.id }).populate("teacher", "username email");
-//     res.json(classes);
-//   } catch (err) {
-//     res.status(500).json({ msg: "Error fetching student classes", error: err.message });
-//   }
-// };
+    const presentCount = report.filter(r => r.status === "present").length;
+    const absentCount = report.filter(r => r.status === "absent").length;
+
+    res.json({
+      classId,
+      className: cls.name,
+      subject: cls.subject,
+      studentId,
+      studentName: student.username,
+      totalSessions: sessions.length,
+      presentCount,
+      absentCount,
+      report,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error" });
+  }
+};
+
+exports.getClassesForAttendanceReport = async (req, res) => {
+  try {
+    const teacherId = new mongoose.Types.ObjectId(req.user.id);
+
+    // Aggregate classes with session count
+    const classes = await Class.aggregate([
+      { $match: { teacher: teacherId } },
+      {
+        $lookup: {
+          from: "sessions",           // MongoDB collection name
+          localField: "_id",
+          foreignField: "classId",
+          as: "sessions",
+        },
+      },
+      {
+        $project: {
+          classId: "$_id",
+          className: "$name",
+          subject: 1,
+          sessionsCount: { $size: "$sessions" },
+        },
+      },
+    ]);
+
+    res.json({ classes });
+  } catch (err) {
+    console.error("Error fetching classes for attendance report:", err);
+    res.status(500).json({ msg: "Server error", error: err.message });
+  }
+};
+
+// Get detailed class report for all students
+exports.getClassAttendanceReportById = async (req, res) => {
+  try {
+    const { classId } = req.params;
+
+    // 1. Fetch class with teacher & students
+    const cls = await Class.findById(classId)
+      .populate("teacher", "username email")
+      .populate("students", "username email");
+
+    if (!cls) return res.status(404).json({ msg: "Class not found" });
+
+    const totalSessions = await Session.countDocuments({ classId });
+
+    // 2. Build report for each student
+    const reportPromises = cls.students.map(async (student) => {
+      const presentCount = await Attendance.countDocuments({
+        classId,
+        studentId: student._id,
+        status: "present",
+      });
+
+      const absentCount = totalSessions - presentCount;
+      const attendancePercentage = totalSessions
+        ? ((presentCount / totalSessions) * 100).toFixed(2)
+        : 0;
+
+      return {
+        studentId: student._id,
+        studentName: student.username,
+        email: student.email,
+        presentCount,
+        absentCount,
+        totalSessions,
+        attendancePercentage,
+      };
+    });
+
+    const report = await Promise.all(reportPromises);
+
+    res.json({
+      classId,
+      className: cls.name,
+      subject: cls.subject,
+      teacherName: cls.teacher.username,
+      totalSessions,
+      report,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Error fetching class report", error: err.message });
+  }
+};

@@ -8,6 +8,9 @@ import ClassDetails from "../pages/teacher/ClassDetails";
 import CreateClass from "../pages/teacher/CreateClass";
 import Sessions from "../pages/teacher/Sessions";
 import Reports from "../pages/teacher/Reports";
+import StudentAttendanceDetails from "../components/StudentAttendanceDetails";
+import ClassReport from "../components/ClassReport";
+
 
 // Update this import path
 import DashboardStudent from "../pages/student/dashboard/Dashboard";
@@ -37,7 +40,10 @@ const AppRoutes = () => {
         <Route path="class/:id" element={<ClassDetails />} />
         <Route path="class/:id/sessions" element={<Sessions />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="classes/:classId/students/:studentId/attendance" element={<StudentAttendanceDetails />}/>
+        <Route path="/teacher/classes/:classId/attendance" element={<ClassReport/>}/>
       </Route>
+
 
       {/* Student Routes */}
       <Route

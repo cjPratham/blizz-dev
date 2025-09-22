@@ -1,10 +1,11 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 
 const TeacherLayout = () => {
   const { logoutUser } = useContext(AuthContext);
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logoutUser();
@@ -12,24 +13,86 @@ const TeacherLayout = () => {
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <aside className="w-64 bg-gray-800 text-white p-4 space-y-4">
+    <div className="min-h-screen flex flex-col">
+      {/* Navbar */}
+      <header className="bg-purple-700 text-white p-4 flex items-center justify-between">
         <h1 className="text-xl font-bold">Teacher Panel</h1>
-        <nav className="flex flex-col space-y-2">
-          <Link to="/teacher/dashboard" className="hover:bg-gray-700 p-2 rounded">Dashboard</Link>
-    
-        </nav>
-        <button
-          onClick={handleLogout}
-          className="mt-6 bg-red-600 hover:bg-red-700 p-2 rounded w-full"
-        >
-          Logout
-        </button>
-      </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 p-6 bg-gray-100">
+        {/* Hamburger for mobile */}
+        <button
+          className="md:hidden"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+
+        {/* Desktop Links */}
+        <nav className="hidden md:flex space-x-4">
+          <Link to="/teacher/dashboard" className="hover:bg-purple-800 px-3 py-2 rounded">
+            Dashboard
+          </Link>
+          <Link to="/teacher/create" className="hover:bg-purple-800 px-3 py-2 rounded">
+            Create Class
+          </Link>
+          <Link to="/teacher/reports" className="hover:bg-purple-800 px-3 py-2 rounded">
+            Reports
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded"
+          >
+            Logout
+          </button>
+        </nav>
+      </header>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <nav className="bg-purple-600 text-white flex flex-col md:hidden space-y-2 p-4">
+          <Link
+            to="/teacher/dashboard"
+            className="hover:bg-purple-800 px-3 py-2 rounded"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Dashboard
+          </Link>
+          <Link
+            to="/teacher/create"
+            className="hover:bg-purple-800 px-3 py-2 rounded"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Create Class
+          </Link>
+          <Link
+            to="/teacher/reports"
+            className="hover:bg-purple-800 px-3 py-2 rounded"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Reports
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="bg-red-600 hover:bg-red-700 px-3 py-2 rounded"
+          >
+            Logout
+          </button>
+        </nav>
+      )}
+
+      {/* Main content */}
+      <main className="flex-1 p-4 md:p-6 bg-purple-50">
         <Outlet />
       </main>
     </div>

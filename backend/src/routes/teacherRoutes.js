@@ -4,7 +4,11 @@ const teacherController = require("../controllers/teacherController");
 
 const router = express.Router();
 
+// ====================== TEACHER PROFILE ====================== //
+router.get("/profile", protect, authorize("teacher"), teacherController.getTeacherProfile);
+
 // ====================== CLASS ROUTES ====================== //
+router.get("/classes/attendance-report", protect, authorize("teacher"), teacherController.getClassesForAttendanceReport);
 
 // Create a class
 router.post("/classes", protect, authorize("teacher"), teacherController.createClass);
@@ -42,7 +46,17 @@ router.get("/attendance/:sessionId", protect, authorize("teacher"), teacherContr
 
 
 // ====================== ATTENDANCE REPORT ====================== //
+// Get class attendance report for download
+router.get("/classes/:classId/attendance",protect ,authorize("teacher"), teacherController.getClassAttendanceReportById
+);
+
+// Get attendance report for a class
 router.get("/classes/:classId/attendance-report", protect, authorize("teacher"), teacherController.getClassAttendanceReport);
+// Get detailed attendance report for a student in a class
+router.get(
+  "/classes/:classId/students/:studentId/attendance-details",
+  teacherController.getStudentAttendanceDetails
+);
 
 
 module.exports = router;
