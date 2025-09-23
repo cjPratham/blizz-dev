@@ -50,6 +50,13 @@ router.get("/attendance/:sessionId", protect, authorize("teacher"), teacherContr
 router.get("/classes/:classId/attendance",protect ,authorize("teacher"), teacherController.getClassAttendanceReportById
 );
 
+
+// Get detailed class attendance report for download
+router.get("/classes/:classId/detailed-attendance",protect ,authorize("teacher"), teacherController.getDetailedClassReport
+);
+
+
+
 // Get attendance report for a class
 router.get("/classes/:classId/attendance-report", protect, authorize("teacher"), teacherController.getClassAttendanceReport);
 // Get detailed attendance report for a student in a class

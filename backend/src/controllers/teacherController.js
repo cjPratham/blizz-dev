@@ -367,3 +367,85 @@ exports.getClassAttendanceReportById = async (req, res) => {
     res.status(500).json({ msg: "Error fetching class report", error: err.message });
   }
 };
+
+// Detailed class report for all students
+exports.getDetailedClassReport = async (req, res) => {
+  try {
+    const { classId } = req.params;
+
+    // 1. Get class with teacher & students
+    const cls = await Class.findById(classId)
+      .populate("teacher", "username email")
+      .populate("students", "username email");
+
+    if (!cls) return res.status(404).json({ msg: "Class not found" });
+
+    // 2. Get all sessions of this class
+    const sessions = await Session.find({ classId }).sort({ startTime: 1 });
+
+    // 3. Build detailed report per student
+    const reportPromises = cls.students.map(async (student) => {
+      let presentCount = 0;
+      let absentCount = 0;
+
+      // Session-wise stats
+      const sessionStats = await Promise.all(
+        sessions.map(async (session) => {
+          const attendance = await Attendance.findOne({
+            classId,
+            sessionId: session._id,
+            studentId: student._id,
+          });
+
+          const status = attendance ? attendance.status : "absent";
+          if (status === "present") presentCount++;
+          else absentCount++;
+
+          return {
+            sessionId: session._id,
+            date: session.startTime,
+            status,
+          };
+        })
+      );
+
+      const totalSessions = sessions.length;
+      const attendancePercentage = totalSessions
+        ? ((presentCount / totalSessions) * 100).toFixed(2)
+        : 0;
+
+      return {
+        studentId: student._id,
+        studentName: student.username,
+        email: student.email,
+        sessionStats, // list of session date & status
+        totalPresent: presentCount,
+        totalAbsent: absentCount,
+        totalSessions,
+        attendancePercentage,
+      };
+    });
+
+    const report = await Promise.all(reportPromises);
+
+    res.json({
+      classId,
+      className: cls.name,
+      subject: cls.subject,
+      teacherName: cls.teacher.username,
+      totalSessions: sessions.length,
+      sessions: sessions.map((s) => ({
+        sessionId: s._id,
+        date: s.startTime,
+        endTime: s.endTime,
+      })),
+      report,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      msg: "Error fetching detailed class report",
+      error: err.message,
+    });
+  }
+};
