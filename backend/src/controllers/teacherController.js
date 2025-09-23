@@ -29,6 +29,50 @@ exports.getTeacherProfile = async (req, res) => {
     res.status(500).json({ msg: "Server error", error: err.message });
   }
 };
+const bcrypt = require("bcryptjs");
+
+// Update teacher profile
+exports.updateTeacherProfile = async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+
+    const updates = {};
+    if (username) updates.username = username;
+    if (email) updates.email = email;
+
+    // if password is provided, hash and update it
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      updates.password = await bcrypt.hash(password, salt);
+    }
+
+    const teacher = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: updates },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!teacher) return res.status(404).json({ msg: "Teacher not found" });
+
+    res.json({ msg: "Profile updated successfully", teacher });
+  } catch (err) {
+    res.status(500).json({ msg: "Error updating profile", error: err.message });
+  }
+};
+
+// Delete teacher profile
+exports.deleteTeacherProfile = async (req, res) => {
+  try {
+    const teacher = await User.findByIdAndDelete(req.user.id);
+    if (!teacher) return res.status(404).json({ msg: "Teacher not found" });
+
+    res.json({ msg: "Profile deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ msg: "Error deleting profile", error: err.message });
+  }
+};
+
+
 
 // ===================== Class Management =====================
 exports.createClass = async (req, res) => {
@@ -72,6 +116,40 @@ exports.getClassDetails = async (req, res) => {
     res.status(500).json({ msg: "Error fetching class details", error: err.message });
   }
 };
+
+// Update a class
+exports.updateClass = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, subject } = req.body;
+
+    const cls = await Class.findOne({ _id: id, teacher: req.user.id });
+    if (!cls) return res.status(404).json({ msg: "Class not found" });
+
+    if (name) cls.name = name;
+    if (subject) cls.subject = subject;
+
+    await cls.save();
+    res.json({ msg: "Class updated successfully", class: cls });
+  } catch (err) {
+    res.status(500).json({ msg: "Error updating class", error: err.message });
+  }
+};
+
+// Delete a class
+exports.deleteClass = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const cls = await Class.findOneAndDelete({ _id: id, teacher: req.user.id });
+    if (!cls) return res.status(404).json({ msg: "Class not found or unauthorized" });
+
+    res.json({ msg: "Class deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ msg: "Error deleting class", error: err.message });
+  }
+};
+
 
 // ===================== Session Management =====================
 exports.createSession = async (req, res) => {

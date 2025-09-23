@@ -10,6 +10,7 @@ import Sessions from "../pages/teacher/Sessions";
 import Reports from "../pages/teacher/Reports";
 import StudentAttendanceDetails from "../components/StudentAttendanceDetails";
 import ClassReport from "../components/ClassReport";
+import ManageClasses from "../pages/teacher/ManageClasses";
 
 
 // Update this import path
@@ -18,6 +19,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import AttendanceReport from "../pages/student/AttendanceReport";
 import JoinClass from "../pages/student/JoinClass";
 import MarkAttendance from "../pages/student/MarkAttendance";
+import TeacherProfile from "../pages/teacher/TeacherProfile";
 
 const AppRoutes = () => {
   return (
@@ -36,12 +38,14 @@ const AppRoutes = () => {
         }
       >
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="manage-class" element={<ManageClasses/>} />
         <Route path="create" element={<CreateClass />} />
         <Route path="class/:id" element={<ClassDetails />} />
         <Route path="class/:id/sessions" element={<Sessions />} />
         <Route path="reports" element={<Reports />} />
         <Route path="classes/:classId/students/:studentId/attendance" element={<StudentAttendanceDetails />}/>
         <Route path="/teacher/classes/:classId/attendance" element={<ClassReport/>}/>
+        <Route path="profile" element={<TeacherProfile/>}/>
       </Route>
 
 

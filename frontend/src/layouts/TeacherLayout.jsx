@@ -43,11 +43,14 @@ const TeacherLayout = () => {
           <Link to="/teacher/dashboard" className="hover:bg-purple-800 px-3 py-2 rounded">
             Dashboard
           </Link>
-          <Link to="/teacher/create" className="hover:bg-purple-800 px-3 py-2 rounded">
-            Create Class
+          <Link to="/teacher/manage-class" className="hover:bg-purple-800 px-3 py-2 rounded">
+            Manage Classes
           </Link>
           <Link to="/teacher/reports" className="hover:bg-purple-800 px-3 py-2 rounded">
             Reports
+          </Link>
+          <Link to="/teacher/profile" className="hover:bg-purple-800 px-3 py-2 rounded">
+            Profile
           </Link>
           <button
             onClick={handleLogout}
@@ -69,11 +72,11 @@ const TeacherLayout = () => {
             Dashboard
           </Link>
           <Link
-            to="/teacher/create"
+            to="manage-class"
             className="hover:bg-purple-800 px-3 py-2 rounded"
             onClick={() => setIsMobileMenuOpen(false)}
           >
-            Create Class
+            Manage Classes
           </Link>
           <Link
             to="/teacher/reports"
@@ -81,6 +84,13 @@ const TeacherLayout = () => {
             onClick={() => setIsMobileMenuOpen(false)}
           >
             Reports
+          </Link>
+          <Link
+            to="/teacher/profile"
+            className="hover:bg-purple-800 px-3 py-2 rounded"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            Profile
           </Link>
           <button
             onClick={handleLogout}

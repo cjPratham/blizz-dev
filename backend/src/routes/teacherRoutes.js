@@ -6,6 +6,8 @@ const router = express.Router();
 
 // ====================== TEACHER PROFILE ====================== //
 router.get("/profile", protect, authorize("teacher"), teacherController.getTeacherProfile);
+router.put("/profile", protect, authorize("teacher"), teacherController.updateTeacherProfile);
+router.delete("/profile", protect, authorize("teacher"), teacherController.deleteTeacherProfile);
 
 // ====================== CLASS ROUTES ====================== //
 router.get("/classes/attendance-report", protect, authorize("teacher"), teacherController.getClassesForAttendanceReport);
@@ -18,6 +20,13 @@ router.get("/classes", protect, authorize("teacher"), teacherController.getTeach
 
 // Get class details by ID
 router.get("/classes/:id", protect, authorize("teacher"), teacherController.getClassDetails);
+
+// Update a class
+router.put("/classes/:id", protect, authorize("teacher"), teacherController.updateClass);
+
+// Delete a class
+router.delete("/classes/:id", protect, authorize("teacher"), teacherController.deleteClass);
+
 
 // ====================== SESSION ROUTES ====================== //
 
@@ -50,11 +59,9 @@ router.get("/attendance/:sessionId", protect, authorize("teacher"), teacherContr
 router.get("/classes/:classId/attendance",protect ,authorize("teacher"), teacherController.getClassAttendanceReportById
 );
 
-
 // Get detailed class attendance report for download
 router.get("/classes/:classId/detailed-attendance",protect ,authorize("teacher"), teacherController.getDetailedClassReport
 );
-
 
 
 // Get attendance report for a class
