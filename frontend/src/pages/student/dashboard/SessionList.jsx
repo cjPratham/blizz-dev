@@ -10,6 +10,22 @@ export default function SessionList({ title, sessions, type, loading, onRefresh 
     );
   }
 
+  // Filter sessions based on type
+  const filteredSessions = sessions.filter(session => {
+    const now = new Date();
+    const startTime = new Date(session.startTime);
+    const endTime = new Date(session.endTime);
+
+    if (type === 'active') {
+      // Active sessions: started but not ended
+      return startTime <= now && endTime > now;
+    } else if (type === 'upcoming') {
+      // Upcoming sessions: start time in the future
+      return startTime > now;
+    }
+    return false;
+  });
+
   const bgColor = type === 'active' ? 'bg-green-50' : 'bg-blue-50';
   const textColor = type === 'active' ? 'text-green-700' : 'text-blue-700';
 
@@ -26,9 +42,9 @@ export default function SessionList({ title, sessions, type, loading, onRefresh 
         </button>
       </div>
       
-      {sessions.length > 0 ? (
+      {filteredSessions.length > 0 ? (
         <div className="space-y-3">
-          {sessions.map((session) => (
+          {filteredSessions.map((session) => (
             <div key={session._id} className={`${bgColor} p-3 rounded-lg`}>
               <p className="font-medium">{session.title || 'Session'}</p>
               <p className="text-sm text-gray-600">

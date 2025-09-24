@@ -19,12 +19,6 @@ export default function ClassCard({ classItem }) {
             {isExpanded ? '▲' : '▼'}
           </span>
         </div>
-        <p className="text-gray-600 text-sm">
-          Instructor: {classItem.instructor?.name || classItem.instructor || 'No instructor info'}
-        </p>
-        <p className="text-sm text-gray-500">
-          Schedule: {classItem.schedule || 'Schedule not set'}
-        </p>
       </div>
 
       {isExpanded && (
