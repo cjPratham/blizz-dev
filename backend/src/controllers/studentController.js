@@ -2,7 +2,7 @@ const Class = require("../models/Class");
 const Session = require("../models/Session");
 const Attendance = require("../models/Attendance");
 const User = require("../models/User");
-const { isWithinRadius } = require("../utils/geolocation").default;
+const { isWithinRadius } = require("../utils/geolocation");
 
 // ==========================
 // Student Controller
