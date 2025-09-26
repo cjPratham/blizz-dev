@@ -113,11 +113,11 @@ const Sessions = () => {
           >
             <div className="flex-1">
               <p className="font-semibold">
-                {/* Start: {new Date(s.startTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} */}
-                Start: {s.startTime}
+                Start: {new Date(s.startTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
+                {/* Start: {s.startTime} */}
               </p>
-              {/* <p>End: {new Date(s.endTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</p> */}
-              <p>End: {"hello"}</p>
+              <p>End: {new Date(s.endTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</p>
+              {/* <p>End: {"hello"}</p> */}
               <p>
                 Status:{" "}
                 <span
