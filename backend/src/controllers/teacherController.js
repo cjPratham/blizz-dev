@@ -332,13 +332,15 @@ exports.getStudentAttendanceDetails = async (req, res) => {
     const attendanceMap = {};
     attendanceRecords.forEach(rec => (attendanceMap[rec.sessionId.toString()] = rec.status));
 
+    // Example for getStudentAttendanceDetails
     const report = sessions.map(session => ({
       sessionId: session._id,
       date: session.startTime.toISOString().split("T")[0],
-      startTime: session.startTime,
-      endTime: session.endTime,
+      startTime: new Date(session.startTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+      endTime: new Date(session.endTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
       status: attendanceMap[session._id.toString()] || "absent",
     }));
+
 
     const presentCount = report.filter(r => r.status === "present").length;
     const absentCount = report.filter(r => r.status === "absent").length;
@@ -481,7 +483,9 @@ exports.getDetailedClassReport = async (req, res) => {
 
           return {
             sessionId: session._id,
-            date: session.startTime,
+            date: new Date(session.startTime).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }),
+            startTime: new Date(session.startTime).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" }),
+            endTime: new Date(session.endTime).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" }),
             status,
           };
         })
@@ -514,8 +518,9 @@ exports.getDetailedClassReport = async (req, res) => {
       totalSessions: sessions.length,
       sessions: sessions.map((s) => ({
         sessionId: s._id,
-        date: s.startTime,
-        endTime: s.endTime,
+        date: new Date(s.startTime).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" }),
+        startTime: new Date(s.startTime).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" }),
+        endTime: new Date(s.endTime).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" }),
       })),
       report,
     });
