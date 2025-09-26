@@ -2,6 +2,23 @@ import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import api from "../../api/axios";
 
+// Helper functions
+const formatIST = (utcDate) => {
+  return new Date(utcDate).toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour12: true,
+  });
+};
+
+// Converts UTC string to 'YYYY-MM-DDTHH:mm' for datetime-local input
+const utcToLocalInput = (utcDate) => {
+  if (!utcDate) return "";
+  const date = new Date(utcDate);
+  const off = date.getTimezoneOffset() * 60000; // offset in ms
+  const local = new Date(date.getTime() - off);
+  return local.toISOString().slice(0, 16);
+};
+
 const Sessions = () => {
   const { id } = useParams(); // classId
   const [sessions, setSessions] = useState([]);
@@ -34,7 +51,7 @@ const Sessions = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Convert input time (local) to UTC ISO string
+      // Convert local datetime input to UTC before sending
       const payload = {
         classId: id,
         method: form.method,
@@ -120,25 +137,11 @@ const Sessions = () => {
             className="border rounded-lg p-4 bg-white shadow-md flex flex-col md:flex-row md:justify-between md:items-center gap-3"
           >
             <div className="flex-1">
-              <p className="font-semibold">
-                Start:{" "}
-                {new Date(s.startTime).toLocaleString("en-IN", {
-                  timeZone: "Asia/Kolkata",
-                })}
-              </p>
-              <p>
-                End:{" "}
-                {new Date(s.endTime).toLocaleString("en-IN", {
-                  timeZone: "Asia/Kolkata",
-                })}
-              </p>
+              <p className="font-semibold">Start: {formatIST(s.startTime)}</p>
+              <p>End: {formatIST(s.endTime)}</p>
               <p>
                 Status:{" "}
-                <span
-                  className={`font-semibold ${
-                    s.active ? "text-green-600" : "text-red-600"
-                  }`}
-                >
+                <span className={`font-semibold ${s.active ? "text-green-600" : "text-red-600"}`}>
                   {s.active ? "🟢 Active" : "🔴 Stopped"}
                 </span>
               </p>
