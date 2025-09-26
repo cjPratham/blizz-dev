@@ -113,9 +113,9 @@ const Sessions = () => {
           >
             <div className="flex-1">
               <p className="font-semibold">
-                Start: {new Date(s.startTime).toLocaleString()}
+                Start: {new Date(s.startTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
               </p>
-              <p>End: {new Date(s.endTime).toLocaleString()}</p>
+              <p>End: {new Date(s.endTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</p>
               <p>
                 Status:{" "}
                 <span

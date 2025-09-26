@@ -1,6 +1,5 @@
-import axios from "axios";
+// auth.js
+import api from "./axios";  // import your custom instance
 
-const API = __API_URL__;
-
-export const signup = (data) => axios.post(`${API}/auth/register`, data);
-export const login = (data) => axios.post(`${API}/auth/login`, data);
+export const signup = (data) => api.post(`/auth/register`, data);
+export const login = (data) => api.post(`/auth/login`, data);
