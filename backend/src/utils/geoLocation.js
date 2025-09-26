@@ -19,4 +19,4 @@ function isWithinRadius(studentLoc, teacherLoc, radius = 50) {
   return distance <= radius; // true if within allowed radius
 }
 
-module.exports = { isWithinRadius };
+export default { isWithinRadius };
