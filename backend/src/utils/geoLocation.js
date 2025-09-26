@@ -16,7 +16,7 @@ function isWithinRadius(studentLoc, teacherLoc, radius = 50) {
   const distance = R * c; // in meters
   console.log(`Calculated distance: ${distance} meters`);
   console.log(`Allowed radius: ${radius} meters`);
-  return distance <= radius; // true if within allowed radius
+  return distance <= radius;
 }
 
-export default { isWithinRadius };
+export default { isWithinRadius};
