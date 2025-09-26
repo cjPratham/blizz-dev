@@ -117,7 +117,7 @@ const Sessions = () => {
                 {/* Start: {s.startTime} */}
               </p>
               <p>End: {new Date(s.endTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</p>
-              {/* <p>End: {"hello"}</p> */}
+              <p>End: {"hello"}</p>
               <p>
                 Status:{" "}
                 <span
