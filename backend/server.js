@@ -8,10 +8,14 @@ dotenv.config();
 connectDB();
 
 const app = express();
-app.use(cors({
-  origin: ["https://blizz-attendance.vercel.app/"], // Chrome requires exact origin
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: "https://blizz-attendance.vercel.app", // frontend URL
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    credentials: true, // if sending cookies or auth headers
+  })
+);
+app.options("*", cors());
 app.use(express.json());
 
 app.use("/api/auth",auth);
