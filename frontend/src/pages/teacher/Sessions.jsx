@@ -34,7 +34,15 @@ const Sessions = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post("/teacher/sessions", { ...form, classId: id });
+      // Convert input time (local) to UTC ISO string
+      const payload = {
+        classId: id,
+        method: form.method,
+        startTime: new Date(form.startTime).toISOString(),
+        endTime: new Date(form.endTime).toISOString(),
+      };
+
+      await api.post("/teacher/sessions", payload);
       setForm({ startTime: "", endTime: "", method: "geo" });
       fetchSessions();
     } catch (err) {
@@ -113,11 +121,17 @@ const Sessions = () => {
           >
             <div className="flex-1">
               <p className="font-semibold">
-                Start: {new Date(s.startTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}
-                {/* Start: {s.startTime} */}
+                Start:{" "}
+                {new Date(s.startTime).toLocaleString("en-IN", {
+                  timeZone: "Asia/Kolkata",
+                })}
               </p>
-              <p>End: {new Date(s.endTime).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</p>
-              <p>End: {"hello"}</p>
+              <p>
+                End:{" "}
+                {new Date(s.endTime).toLocaleString("en-IN", {
+                  timeZone: "Asia/Kolkata",
+                })}
+              </p>
               <p>
                 Status:{" "}
                 <span
@@ -175,7 +189,11 @@ const AttendanceCounter = ({ sessionId, getCount }) => {
     return () => clearInterval(interval);
   }, [sessionId, getCount]);
 
-  return <p className="mt-2 font-semibold text-purple-700">✅ Attendance marked: {count}</p>;
+  return (
+    <p className="mt-2 font-semibold text-purple-700">
+      ✅ Attendance marked: {count}
+    </p>
+  );
 };
 
 export default Sessions;
