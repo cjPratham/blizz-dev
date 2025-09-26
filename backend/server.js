@@ -18,9 +18,6 @@ app.use(
   })
 );
 
-// ✅ Explicit preflight handling (Express 5 requires a valid path)
-app.options("/*", cors());
-
 app.use(express.json());
 
 // Routes
