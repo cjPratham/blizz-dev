@@ -27,7 +27,13 @@ const Sessions = () => {
 
   useEffect(() => {
     fetchClass();
+  }, [id]);
+
+  useEffect(() => {
     fetchSessions();
+    // 🔄 Poll every 5 seconds for updates
+    const interval = setInterval(fetchSessions, 5000);
+    return () => clearInterval(interval);
   }, [id]);
 
   const fetchClass = async () => {
@@ -51,7 +57,6 @@ const Sessions = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Convert local datetime input to UTC before sending
       const payload = {
         classId: id,
         method: form.method,
@@ -83,8 +88,8 @@ const Sessions = () => {
         fetchSessions();
       },
       (error) => {
-        console.error("Error getting location:", error);
-        alert("Could not get your location.");
+        console.error("Geolocation error:", error.code, error.message);
+        alert("Could not get your location. Please allow location access.");
       }
     );
   };
