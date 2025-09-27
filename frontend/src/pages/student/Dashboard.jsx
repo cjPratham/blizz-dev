@@ -5,10 +5,17 @@ import { AuthContext } from '../../contexts/AuthContext';
 import Loader from '../../components/Loader';
 
 // Helper functions outside the component
-const adjustForTimezone = (dateString) => {
-  const date = new Date(dateString);
-  return new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
-};
+// const adjustForTimezone = (dateString) => {
+//   const date = new Date(dateString);
+//   return new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+// };
+
+const formatIST = (date) =>
+  new Date(date).toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour12: true
+  });
+
 
 const categorizeSessions = (sessions) => {
   const now = new Date();
@@ -17,9 +24,9 @@ const categorizeSessions = (sessions) => {
   const past = [];
 
   sessions.forEach(session => {
-    const start = adjustForTimezone(session.startTime);
-    const end = adjustForTimezone(session.endTime);
-    
+    const start = new Date(session.startTime); // UTC safe
+    const end = new Date(session.endTime);
+
     if (now >= start && now <= end) {
       active.push(session);
     } else if (start > now) {
@@ -27,6 +34,7 @@ const categorizeSessions = (sessions) => {
     } else {
       past.push(session);
     }
+
   });
 
   return { active, upcoming, past };
@@ -271,14 +279,14 @@ export default function Dashboard() {
                                   <p className="font-medium">{session.title}</p>
                                   <p className="text-sm text-gray-600">
                                     📍 {session.location || 'No location'} • 
-                                    ⏰ {new Date(session.startTime).toLocaleTimeString()} - {new Date(session.endTime).toLocaleTimeString()}
+                                    ⏰ {formatIST(session.startTime)} - {formatIST(session.endTime)}
                                   </p>
                                  <Link
-  to={`/student/mark-attendance/${session._id}`}
-  className="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
->
-  Mark Attendance
-</Link>
+                                  to={`/student/mark-attendance/${session._id}`}
+                                  className="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                                >
+                                  Mark Attendance
+                                </Link>
                                 </div>
                               ))}
                             </div>

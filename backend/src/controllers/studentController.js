@@ -2,7 +2,7 @@ const Class = require("../models/Class");
 const Session = require("../models/Session");
 const Attendance = require("../models/Attendance");
 const User = require("../models/User");
-const { isWithinRadius } = require("../utils/geolocation");
+const { isWithinRadius } = require("../utils/geolocation")
 
 // ==========================
 // Student Controller
@@ -59,71 +59,199 @@ exports.getActiveSessions = async (req, res) => {
     }
 };
 
+// @desc    Get upcoming sessions for student's class
+// @route   GET /api/student/upcoming-sessions/:classId
+// @access  Private (Student)
+exports.getUpcomingSessions = async (req, res) => {
+  try {
+    const { classId } = req.params;
+
+    // Check enrollment
+    const cls = await Class.findOne({ _id: classId, students: req.user.id });
+    if (!cls) return res.status(403).json({ msg: "Not enrolled in this class" });
+
+    // Current time (UTC)
+    const now = new Date();
+
+    // Find sessions where startTime is after now
+    const sessions = await Session.find({
+      classId,
+      startTime: { $gt: now }
+    }).sort({ startTime: 1 }); // sort by soonest
+
+    res.json(sessions);
+  } catch (err) {
+    res.status(500).json({ msg: "Error fetching upcoming sessions", error: err.message });
+  }
+};
+
+
 // @desc    Mark attendance with geolocation and time validation
 // @route   POST /api/student/mark-attendance
 // @access  Private (Student)
+// exports.markAttendance = async (req, res) => {
+//     try {
+//         const { sessionId, studentLat, studentLng, status = "present" } = req.body;
+//         const studentId = req.user.id;
+
+//         if (!sessionId || studentLat === undefined || studentLng === undefined) {
+//             return res.status(400).json({ msg: "Session ID and coordinates are required" });
+//         }
+
+//         const session = await Session.findOne({ _id: sessionId, active: true });
+//         if (!session) return res.status(404).json({ msg: "Session not found or not active" });
+
+//         const cls = await Class.findOne({ _id: session.classId, students: studentId });
+//         if (!cls) return res.status(403).json({ msg: "Not enrolled in this class" });
+
+//         const now = new Date();
+//         if (now < session.startTime || now > session.endTime) {
+//             return res.status(400).json({ 
+//                 msg: `Attendance can only be marked during session hours. Current time: ${now.toISOString()}, session: ${session.startTime.toISOString()} - ${session.endTime.toISOString()}`
+//             });
+//         }
+
+//         if (session.method === "geo") {
+//             if (!session.geoLocation) {
+//                 return res.status(400).json({ msg: "Geo-location not set for this session" });
+//             }
+
+//             const withinRadius = isWithinRadius(
+//                 { lat: studentLat, lng: studentLng },
+//                 { lat: session.geoLocation.lat, lng: session.geoLocation.lng },
+//                 50 // 50 meters threshold
+//             );
+
+//             if (!withinRadius) {
+//                 return res.status(400).json({
+//                     msg: "You are too far from the class location",
+//                     required: "Come within 50m of the classroom"
+//                 });
+//             }
+//         }
+
+//         const existingAttendance = await Attendance.findOne({ sessionId, studentId });
+//         if (existingAttendance) return res.status(400).json({ msg: "Attendance already marked for this session" });
+
+//         const attendance = new Attendance({
+//             sessionId,
+//             classId: session.classId,
+//             studentId,
+//             status,
+//             geoLocation: { lat: studentLat, lng: studentLng },
+//             markedAt: now
+//         });
+
+//         await attendance.save();
+//         await attendance.populate("sessionId", "method geoLocation");
+
+//         res.status(200).json({ msg: "Attendance marked successfully", attendance });
+
+//     } catch (err) {
+//         res.status(500).json({ msg: "Error marking attendance", error: err.message });
+//     }
+// };
+const mongoose = require("mongoose");
+// const Session = require("../models/Session");
+// const Class = require("../models/Class");
+// const Attendance = require("../models/Attendance");
+// const { isWithinRadius } = require("../utils/geoUtils");
+
+// @desc    Mark attendance with geolocation and time validation
+// @route   POST /api/student/attendance/mark
+// @access  Private (Student)
 exports.markAttendance = async (req, res) => {
-    try {
-        const { sessionId, studentLat, studentLng, status = "present" } = req.body;
-        const studentId = req.user.id;
+  try {
+    const { sessionId, studentLat, studentLng, status = "present" } = req.body;
+    const studentId = req.user.id;
 
-        if (!sessionId || studentLat === undefined || studentLng === undefined) {
-            return res.status(400).json({ msg: "Session ID and coordinates are required" });
-        }
+    console.log("Incoming request:", { sessionId, studentLat, studentLng, studentId });
 
-        const session = await Session.findOne({ _id: sessionId, active: true });
-        if (!session) return res.status(404).json({ msg: "Session not found or not active" });
-
-        const cls = await Class.findOne({ _id: session.classId, students: studentId });
-        if (!cls) return res.status(403).json({ msg: "Not enrolled in this class" });
-
-        const now = new Date();
-        if (now < session.startTime || now > session.endTime) {
-            return res.status(400).json({ 
-                msg: `Attendance can only be marked during session hours. Current time: ${now.toISOString()}, session: ${session.startTime.toISOString()} - ${session.endTime.toISOString()}`
-            });
-        }
-
-        if (session.method === "geo") {
-            if (!session.geoLocation) {
-                return res.status(400).json({ msg: "Geo-location not set for this session" });
-            }
-
-            const withinRadius = isWithinRadius(
-                { lat: studentLat, lng: studentLng },
-                { lat: session.geoLocation.lat, lng: session.geoLocation.lng },
-                50 // 50 meters threshold
-            );
-
-            if (!withinRadius) {
-                return res.status(400).json({
-                    msg: "You are too far from the class location",
-                    required: "Come within 50m of the classroom"
-                });
-            }
-        }
-
-        const existingAttendance = await Attendance.findOne({ sessionId, studentId });
-        if (existingAttendance) return res.status(400).json({ msg: "Attendance already marked for this session" });
-
-        const attendance = new Attendance({
-            sessionId,
-            classId: session.classId,
-            studentId,
-            status,
-            geoLocation: { lat: studentLat, lng: studentLng },
-            markedAt: now
-        });
-
-        await attendance.save();
-        await attendance.populate("sessionId", "method geoLocation");
-
-        res.status(200).json({ msg: "Attendance marked successfully", attendance });
-
-    } catch (err) {
-        res.status(500).json({ msg: "Error marking attendance", error: err.message });
+    // Validate inputs
+    if (!sessionId || studentLat === undefined || studentLng === undefined) {
+      return res.status(400).json({ msg: "Session ID and coordinates are required" });
     }
+
+    if (!mongoose.Types.ObjectId.isValid(sessionId)) {
+      return res.status(400).json({ msg: "Invalid session ID" });
+    }
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({ msg: "Invalid student ID" });
+    }
+
+    // Fetch session
+    const session = await Session.findOne({ _id: sessionId, active: true });
+    if (!session) {
+      return res.status(404).json({ msg: "Session not found or not active" });
+    }
+
+    // Check if student belongs to class
+    const cls = await Class.findOne({ _id: session.classId, students: studentId });
+    if (!cls) {
+      return res.status(403).json({ msg: "Not enrolled in this class" });
+    }
+
+    // Time validation
+    const now = new Date();
+    if (now < session.startTime || now > session.endTime) {
+      return res.status(400).json({
+        msg: "Attendance can only be marked during session hours",
+        current: now.toISOString(),
+        sessionWindow: {
+          start: session.startTime.toISOString(),
+          end: session.endTime.toISOString(),
+        },
+      });
+    }
+
+    // Geo validation
+    if (session.method === "geo") {
+      if (!session.geoLocation) {
+        return res.status(400).json({ msg: "Geo-location not set for this session" });
+      }
+
+      const withinRadius = isWithinRadius(
+        { lat: studentLat, lng: studentLng },
+        { lat: session.geoLocation.lat, lng: session.geoLocation.lng },
+        50 // meters
+      );
+
+      if (!withinRadius) {
+        return res.status(400).json({
+          msg: "You are too far from the class location",
+          required: "Come within 50m of the classroom",
+        });
+      }
+    }
+
+    // Prevent duplicate attendance
+    const existingAttendance = await Attendance.findOne({ sessionId, studentId });
+    if (existingAttendance) {
+      return res.status(400).json({ msg: "Attendance already marked for this session" });
+    }
+
+    // Save attendance
+    const attendance = new Attendance({
+      sessionId,
+      classId: session.classId,
+      studentId,
+      status,
+      geoLocation: { lat: studentLat, lng: studentLng },
+      markedAt: now,
+    });
+
+    await attendance.save();
+    await attendance.populate("sessionId", "method geoLocation");
+
+    console.log("✅ Attendance marked:", attendance);
+
+    res.status(200).json({ msg: "Attendance marked successfully", attendance });
+  } catch (err) {
+    console.error("❌ Error in markAttendance:", err);
+    res.status(500).json({ msg: "Error marking attendance", error: err.message });
+  }
 };
+
 
 // @desc    Get attendance history for student
 // @route   GET /api/student/attendance-history

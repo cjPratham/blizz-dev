@@ -19,6 +19,7 @@ router.get("/classes", protect, authorize("student"), studentController.getStude
 
 // Get active sessions for a class
 router.get("/classes/:classId/active-sessions", protect, authorize("student"), studentController.getActiveSessions);
+router.get("/classes/:classId/upcoming-sessions", protect, authorize("student"), studentController.getUpcomingSessions);
 
 // ====================== ATTENDANCE ROUTES ====================== //
 

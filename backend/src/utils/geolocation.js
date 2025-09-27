@@ -1,5 +1,5 @@
 
-function isWithinRadius(studentLoc, teacherLoc, radius = 50) {
+export function isWithinRadius(studentLoc, teacherLoc, radius = 50) {
   if (!studentLoc || !teacherLoc) return false;
 
   const R = 6371e3; // earth radius in meters
@@ -18,5 +18,3 @@ function isWithinRadius(studentLoc, teacherLoc, radius = 50) {
   console.log(`Allowed radius: ${radius} meters`);
   return distance <= radius;
 }
-
-export default { isWithinRadius};
