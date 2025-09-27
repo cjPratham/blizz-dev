@@ -58,7 +58,7 @@ const ClassReport = () => {
             Email: s.email,
           };
           s.sessionStats.forEach((sess, idx) => {
-            row[`${idx + 1} (${new Date(sess.date).toLocaleDateString()})`] = sess.status;
+            row[`${(sess.date).toString()}`] = sess.status;
           });
           row.Present = s.totalPresent;
           row.Absent = s.totalAbsent;
@@ -112,7 +112,7 @@ const ClassReport = () => {
       // Detailed table with sessions as columns
       tableColumn = ["Name", "Email"];
       detailedData.sessions.forEach((sess) => {
-        tableColumn.push(new Date(sess.date).toLocaleDateString()); // only date
+        tableColumn.push((sess.date).toString()); // only date
       });
       tableColumn.push("Present", "Absent", "Total Sessions", "% Attendance");
 
@@ -217,7 +217,8 @@ const ClassReport = () => {
                 <th className="border px-3 py-2">Email</th>
                 {detailedData?.sessions?.map((sess, idx) => (
                   <th key={idx} className="border px-3 py-2">
-                    {new Date(sess.date).toLocaleDateString()}
+                    {(sess.date).toString()}
+
                   </th>
                 ))}
                 <th className="border px-3 py-2">Present</th>

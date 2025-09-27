@@ -66,15 +66,19 @@ const StudentAttendanceDetails = () => {
             >
               <div>
                 <p className="font-semibold text-gray-700">
-                  {new Date(session.date).toLocaleDateString()}
+                  {new Date(session.date).toLocaleDateString("en-IN", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
                 </p>
                 <p className="text-sm text-gray-600">
-                  {new Date(session.startTime).toLocaleTimeString([], {
+                  {parseDateTime(session.startTime).toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
                   {" - "}
-                  {new Date(session.endTime).toLocaleTimeString([], {
+                  {parseDateTime(session.endTime).toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
@@ -101,5 +105,18 @@ const StudentAttendanceDetails = () => {
     </div>
   );
 };
+
+function parseDateTime(dateTimeStr) {
+const [datePart, timePart] = dateTimeStr.split(", ");
+const [day, month, year] = datePart.split("/").map(Number);
+const [hoursMinutesSeconds, meridiem] = [timePart.split(" ")[0], timePart.split(" ")[1]];
+let [hours, minutes, seconds] = hoursMinutesSeconds.split(":").map(Number);
+
+// Convert 12-hour to 24-hour
+if (meridiem.toLowerCase() === "pm" && hours < 12) hours += 12;
+if (meridiem.toLowerCase() === "am" && hours === 12) hours = 0;
+
+return new Date(year, month - 1, day, hours, minutes, seconds);
+}
 
 export default StudentAttendanceDetails;
